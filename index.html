@@ -12,10 +12,38 @@
         .container { padding: 20px 5%; max-width: 500px; margin: 0 auto; }
         .product-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; z-index: 1; }
         
+        /* --- ЭКРАН ЗАГРУЗКИ (PRELOADER) --- */
+        #loader {
+            position: fixed;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: var(--bg-light);
+            z-index: 99999; /* Самый верхний слой */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #e2e8f0;
+            border-top: 5px solid var(--telegram-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        .loading-text { font-weight: 600; color: #555; font-size: 1.1rem; }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* --- СТИЛИ ДЛЯ ИЗОБРАЖЕНИЯ --- */
         .img-container {
             width: 100%;
-            display: none; /* СКРЫТО ПО УМОЛЧАНИЮ */
+            display: none; 
             justify-content: center;
             margin-bottom: 20px;
             height: 200px; 
@@ -27,7 +55,7 @@
             max-height: 100%;
             object-fit: contain;
             border-radius: 12px;
-            display: none; /* Каждая картинка скрыта по умолчанию */
+            display: none; 
         }
 
         .custom-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
@@ -61,6 +89,12 @@
     </style>
 </head>
 <body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loading-text">Загрузка...</div>
+    </div>
+
     <div class="container">
         <div class="product-card">
             <h2 style="text-align:center">Оформление заказа</h2>
@@ -137,6 +171,14 @@
         let userUsername = null;
 
         window.onload = () => {
+            // 1. СКРЫВАЕМ ЭКРАН ЗАГРУЗКИ ПОСЛЕ ПОЛНОЙ ЗАГРУЗКИ
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500); // Небольшая задержка для плавности
+
+            // 2. Инициализация Telegram
             const nickInput = document.getElementById('tg-nick');
             if(tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const u = tg.initDataUnsafe.user;
@@ -150,56 +192,73 @@
             }
         };
 
-        // --- ЕДИНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ИНТЕРФЕЙСА ---
+        // --- ЛОГИКА ДЛЯ АВТОМАТИЧЕСКОГО +7 ---
+        const phoneInput = document.getElementById('phone');
+
+        phoneInput.addEventListener('focus', function() {
+            if (!this.value) {
+                this.value = '+7';
+            }
+        });
+
+        phoneInput.addEventListener('blur', function() {
+            if (this.value === '+7') {
+                this.value = '';
+            }
+        });
+
+        phoneInput.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, ''); 
+            if (value.length === 0) {
+                this.value = '';
+                return;
+            }
+            if (value[0] === '8') {
+                value = '7' + value.substring(1);
+            } else if (value[0] === '9') {
+                value = '7' + value;
+            } else if (value[0] !== '7') {
+                value = '7' + value;
+            }
+            if (value.length > 11) value = value.substring(0, 11);
+            this.value = '+' + value;
+        });
+        // -------------------------------------
+
         function updateInterface() {
             const type = document.getElementById('prod-type').value;
             const color = document.getElementById('prod-color').value;
             
             const imgContainer = document.getElementById('image-wrapper');
             const colorBlock = document.getElementById('color-block');
-
-            // Картинки
             const imgMini = document.getElementById('img-mini');
             const imgBlack = document.getElementById('img-std-black');
             const imgWhite = document.getElementById('img-std-white');
             const imgGray = document.getElementById('img-std-gray');
 
-            // Скрываем всё перед логикой
             const allImages = [imgMini, imgBlack, imgWhite, imgGray];
             allImages.forEach(img => img.style.display = 'none');
 
-            // Если товар не выбран - скрываем блок и выходим
             if (!type) {
                 imgContainer.style.display = 'none';
                 colorBlock.style.display = 'none';
                 return;
             }
-
-            // Показываем контейнер
             imgContainer.style.display = 'flex';
-
             if (type.includes('Светлячок Стандарт')) {
-                // Это СТАНДАРТ
                 colorBlock.style.display = 'block';
-
-                // Показываем картинку в зависимости от цвета
                 if (color === 'Черный') imgBlack.style.display = 'block';
                 else if (color === 'Белый') imgWhite.style.display = 'block';
                 else if (color === 'Серый') imgGray.style.display = 'block';
-
             } else {
-                // Это МИНИ
                 colorBlock.style.display = 'none';
                 imgMini.style.display = 'block';
             }
         }
 
-        // Вешаем слушатели событий
         document.getElementById('prod-type').addEventListener('change', updateInterface);
         document.getElementById('prod-color').addEventListener('change', updateInterface);
 
-
-        // --- ЛОГИКА КАРТ ---
         let myMap = null;
         let searchControl = null;
 
@@ -265,16 +324,17 @@
 
         function showConfirmation() {
             const data = getData();
-            
-            // ПРОВЕРКА НА ВЫБОР УСТРОЙСТВА
             if(!data.prod) {
                 alert("Пожалуйста, выберите устройство!");
                 document.getElementById('prod-type').focus();
                 return;
             }
-
-            if(!data.fio || !data.phone || !data.addr || !data.city) {
-                alert("Пожалуйста, заполните все поля перед проверкой!"); 
+            if(!data.fio || !data.phone || data.phone.length < 12 || !data.addr || !data.city) {
+                if (data.phone && data.phone.length > 0 && data.phone.length < 12) {
+                    alert("Пожалуйста, введите номер телефона полностью!");
+                } else {
+                    alert("Пожалуйста, заполните все поля перед проверкой!");
+                }
                 return;
             }
 
