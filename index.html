@@ -12,74 +12,36 @@
         .container { padding: 20px 5%; max-width: 500px; margin: 0 auto; }
         .product-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; z-index: 1; }
         
-        /* --- ЭКРАН ЗАГРУЗКИ (PRELOADER) --- */
+        /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loader {
-            position: fixed;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background-color: var(--bg-light);
-            z-index: 99999; /* Самый верхний слой */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: fixed; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: var(--bg-light); z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.5s ease;
         }
         .spinner {
-            width: 50px; height: 50px;
-            border: 5px solid #e2e8f0;
-            border-top: 5px solid var(--telegram-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            width: 50px; height: 50px; border: 5px solid #e2e8f0;
+            border-top: 5px solid var(--telegram-color); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 15px;
         }
         .loading-text { font-weight: 600; color: #555; font-size: 1.1rem; }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- СТИЛИ ДЛЯ ИЗОБРАЖЕНИЯ --- */
-        .img-container {
-            width: 100%;
-            display: none; 
-            justify-content: center;
-            margin-bottom: 20px;
-            height: 200px; 
-            align-items: center;
-        }
-        
-        .product-img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 12px;
-            display: none; 
-        }
-
+        /* --- СТИЛИ --- */
+        .img-container { width: 100%; display: none; justify-content: center; margin-bottom: 20px; height: 200px; align-items: center; }
+        .product-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; display: none; }
         .custom-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
         .custom-input:read-only { background-color: #e9ecef; color: #6c757d; border-color: #dee2e6; cursor: not-allowed; }
-
         .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px;}
         .btn-telegram { background-color: var(--telegram-color); color: white; box-shadow: 0 4px 12px rgba(0,136,204,0.3); }
         .btn-outline { background: #fff; border: 2px dashed #cbd5e0; color: #718096; }
-        
         #yandex-map { width: 100%; height: 400px; display: none; margin-top: 10px; border: 1px solid #ccc; border-radius: 12px; overflow: hidden; }
         #status-msg { margin-top: 15px; text-align: center; }
         .helper-text { font-size: 0.85rem; color: #666; margin-bottom: 10px; }
 
-        /* --- СТИЛИ МОДАЛЬНОГО ОКНА --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); z-index: 9999;
-            display: none; align-items: center; justify-content: center;
-        }
-        .modal-box {
-            background: white; width: 90%; max-width: 400px;
-            padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            text-align: left;
-        }
+        /* --- МОДАЛЬНОЕ ОКНО --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 9999; display: none; align-items: center; justify-content: center; }
+        .modal-box { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; }
         .modal-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; text-align: center; }
         .modal-content { font-size: 0.95rem; line-height: 1.5; color: #333; margin-bottom: 20px; white-space: pre-wrap; }
         .modal-question { font-weight: bold; text-align: center; margin-bottom: 20px; color: var(--primary-color); }
@@ -101,7 +63,6 @@
             
             <div id="image-wrapper" class="img-container">
                 <img id="img-mini" src="firefly_mini.png" alt="Светлячок Мини" class="product-img">
-                
                 <img id="img-std-black" src="firefly_std_black.png" alt="Стандарт Черный" class="product-img">
                 <img id="img-std-white" src="firefly_std_white.png" alt="Стандарт Белый" class="product-img">
                 <img id="img-std-gray"  src="firefly_std_gray.png"  alt="Стандарт Серый"  class="product-img">
@@ -163,22 +124,18 @@
     <script>
         const tg = window.Telegram.WebApp; 
         tg.expand();
-
-        const BOT_TOKEN = '8558603580:AAG9cYrj7HA7XHz758HOj27cfElny1rfH2k'; 
-        const CHAT_ID = '483498099'; 
+        
+        // ТОКЕН ЗДЕСЬ БОЛЬШЕ НЕ НУЖЕН!
+        // Вся отправка сообщений теперь идет через вашего Python-бота на сервере.
 
         let userTelegramId = null;
         let userUsername = null;
 
         window.onload = () => {
-            // 1. СКРЫВАЕМ ЭКРАН ЗАГРУЗКИ ПОСЛЕ ПОЛНОЙ ЗАГРУЗКИ
             const loader = document.getElementById('loader');
             loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-            }, 500); // Небольшая задержка для плавности
+            setTimeout(() => { loader.style.display = 'none'; }, 500);
 
-            // 2. Инициализация Telegram
             const nickInput = document.getElementById('tg-nick');
             if(tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const u = tg.initDataUnsafe.user;
@@ -192,52 +149,30 @@
             }
         };
 
-        // --- ЛОГИКА ДЛЯ АВТОМАТИЧЕСКОГО +7 ---
+        // --- ЛОГИКА ТЕЛЕФОНА И ИНТЕРФЕЙСА ---
         const phoneInput = document.getElementById('phone');
-
-        phoneInput.addEventListener('focus', function() {
-            if (!this.value) {
-                this.value = '+7';
-            }
-        });
-
-        phoneInput.addEventListener('blur', function() {
-            if (this.value === '+7') {
-                this.value = '';
-            }
-        });
-
+        phoneInput.addEventListener('focus', function() { if (!this.value) this.value = '+7'; });
+        phoneInput.addEventListener('blur', function() { if (this.value === '+7') this.value = ''; });
         phoneInput.addEventListener('input', function(e) {
             let value = this.value.replace(/\D/g, ''); 
-            if (value.length === 0) {
-                this.value = '';
-                return;
-            }
-            if (value[0] === '8') {
-                value = '7' + value.substring(1);
-            } else if (value[0] === '9') {
-                value = '7' + value;
-            } else if (value[0] !== '7') {
-                value = '7' + value;
-            }
+            if (value.length === 0) { this.value = ''; return; }
+            if (value[0] === '8') value = '7' + value.substring(1);
+            else if (value[0] === '9') value = '7' + value;
+            else if (value[0] !== '7') value = '7' + value;
             if (value.length > 11) value = value.substring(0, 11);
             this.value = '+' + value;
         });
-        // -------------------------------------
 
         function updateInterface() {
             const type = document.getElementById('prod-type').value;
             const color = document.getElementById('prod-color').value;
-            
             const imgContainer = document.getElementById('image-wrapper');
             const colorBlock = document.getElementById('color-block');
             const imgMini = document.getElementById('img-mini');
             const imgBlack = document.getElementById('img-std-black');
             const imgWhite = document.getElementById('img-std-white');
             const imgGray = document.getElementById('img-std-gray');
-
-            const allImages = [imgMini, imgBlack, imgWhite, imgGray];
-            allImages.forEach(img => img.style.display = 'none');
+            [imgMini, imgBlack, imgWhite, imgGray].forEach(img => img.style.display = 'none');
 
             if (!type) {
                 imgContainer.style.display = 'none';
@@ -255,32 +190,22 @@
                 imgMini.style.display = 'block';
             }
         }
-
         document.getElementById('prod-type').addEventListener('change', updateInterface);
         document.getElementById('prod-color').addEventListener('change', updateInterface);
 
+        // --- КАРТЫ ---
         let myMap = null;
         let searchControl = null;
-
         document.getElementById('open-map-btn').addEventListener('click', function() {
             const mapDiv = document.getElementById('yandex-map');
             const btn = this;
             const cityValue = document.getElementById('city').value.trim();
-
-            if (!cityValue) {
-                alert("Сначала введите город в поле 'Город доставки'!");
-                document.getElementById('city').focus();
-                return;
-            }
-
+            if (!cityValue) { alert("Сначала введите город!"); document.getElementById('city').focus(); return; }
             mapDiv.style.display = 'block';
             btn.innerText = "⏳ Ищем пункты СДЭК...";
-
             ymaps.ready(function () {
                 if (!myMap) {
-                    myMap = new ymaps.Map('yandex-map', {
-                        center: [55.751574, 37.573856], zoom: 10, controls: ['zoomControl', 'geolocationControl']
-                    });
+                    myMap = new ymaps.Map('yandex-map', { center: [55.751574, 37.573856], zoom: 10, controls: ['zoomControl'] });
                     searchControl = new ymaps.control.SearchControl({ options: { provider: 'yandex#search', noPlacemark: false, resultsPerPage: 10 } });
                     myMap.controls.add(searchControl);
                     searchControl.events.add('resultselect', function (e) {
@@ -297,17 +222,12 @@
                         });
                     });
                 }
-                searchControl.search(`СДЭК ${cityValue}`).then(function () {
-                    btn.innerText = "📍 Выберите пункт на карте";
-                    if (searchControl.getResultsCount() === 0) alert("Пункты СДЭК не найдены. Проверьте название города.");
-                });
+                searchControl.search(`СДЭК ${cityValue}`);
             });
         });
-
         document.getElementById('cdek-address').addEventListener('click', function() {
             if(this.hasAttribute('readonly') && confirm('Ввести адрес вручную?')) {
-                this.removeAttribute('readonly');
-                this.focus();
+                this.removeAttribute('readonly'); this.focus();
             }
         });
 
@@ -324,20 +244,10 @@
 
         function showConfirmation() {
             const data = getData();
-            if(!data.prod) {
-                alert("Пожалуйста, выберите устройство!");
-                document.getElementById('prod-type').focus();
-                return;
-            }
+            if(!data.prod) { alert("Выберите устройство!"); return; }
             if(!data.fio || !data.phone || data.phone.length < 12 || !data.addr || !data.city) {
-                if (data.phone && data.phone.length > 0 && data.phone.length < 12) {
-                    alert("Пожалуйста, введите номер телефона полностью!");
-                } else {
-                    alert("Пожалуйста, заполните все поля перед проверкой!");
-                }
-                return;
+                alert("Заполните все поля корректно!"); return;
             }
-
             const previewText = 
                 `📦 <b>Товар:</b> ${data.prod}\n` +
                 `🎨 <b>Цвет:</b> ${data.color}\n\n` +
@@ -345,74 +255,35 @@
                 `🏙 <b>Город:</b> ${data.city}\n` +
                 `📱 <b>Тел:</b> ${data.phone}\n` +
                 `📍 <b>ПВЗ:</b> ${data.addr}`;
-
             document.getElementById('modal-text').innerHTML = previewText;
             document.getElementById('confirmation-modal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('confirmation-modal').style.display = 'none';
-        }
+        function closeModal() { document.getElementById('confirmation-modal').style.display = 'none'; }
 
-        async function sendOrder() {
+        // --- ГЛАВНОЕ ИЗМЕНЕНИЕ ---
+        function sendOrder() {
             closeModal();
             const btn = document.getElementById('pre-submit-btn');
-            const status = document.getElementById('status-msg');
             const data = getData(); 
+            
+            // Формируем чистый JSON объект для Python-бота
+            const orderData = {
+                action: "new_order",
+                product: data.prod,
+                color: data.color,
+                fio: data.fio,
+                city: data.city,
+                phone: data.phone,
+                address: data.addr
+            };
 
-            let userLink = "";
-            let displayNick = "";
-            if (userUsername) {
-                userLink = `https://t.me/${userUsername}`;
-                displayNick = `<a href="${userLink}">@${userUsername}</a>`;
-            } else if (userTelegramId) {
-                userLink = `tg://user?id=${userTelegramId}`;
-                displayNick = `<a href="${userLink}">Профиль (ID: ${userTelegramId})</a>`;
-            } else {
-                displayNick = document.getElementById('tg-nick').value || "Не указан";
-            }
-
-            const adminMsg = `🛍 <b>НОВЫЙ ЗАКАЗ</b>\n\n` +
-                             `📦 <b>Товар:</b> ${data.prod}\n` +
-                             `🎨 <b>Цвет:</b> ${data.color}\n\n` +
-                             `👤 <b>ФИО:</b> ${data.fio}\n` +
-                             `🏙 <b>Город:</b> ${data.city}\n` +
-                             `📱 <b>Тел:</b> ${data.phone}\n` +
-                             `📍 <b>ПВЗ:</b> ${data.addr}\n` +
-                             `🔗 <b>Клиент:</b> ${displayNick}`;
-
-            const userMsg = `✅ <b>Ваш заказ принят!</b>\n\n` +
-                            `📦 ${data.prod}\n` +
-                            `📍 ${data.addr}\n\n` +
-                            `Данные переданы менеджеру. Скоро свяжемся с вами для подтверждения.`;
-
-            btn.disabled = true;
-            status.innerText = "⏳ Отправка...";
-
+            // Передаем данные боту. Web App закроется сам.
+            // Python-бот на Synology получит эти данные, сохранит их и отправит сообщение.
             try {
-                const adminResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ chat_id: CHAT_ID, text: adminMsg, parse_mode: 'HTML' })
-                });
-
-                if (!adminResponse.ok) throw new Error('Ошибка Telegram API');
-
-                if (userTelegramId) {
-                    try {
-                        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                            method: 'POST', headers: {'Content-Type':'application/json'},
-                            body: JSON.stringify({ chat_id: userTelegramId, text: userMsg, parse_mode: 'HTML' })
-                        });
-                    } catch (err) { console.log("Бот не смог написать клиенту"); }
-                }
-
-                status.innerHTML = "<span style='color:#28a745'>✅ Заказ успешно отправлен!</span>";
-                setTimeout(() => tg.close(), 3000);
-
-            } catch(e) {
-                window.open(`https://t.me/leks_k7?text=${encodeURIComponent(adminMsg.replace(/<[^>]*>/g, ''))}`);
-                status.innerText = "Ошибка сети. Открываем чат...";
-                btn.disabled = false;
+                tg.sendData(JSON.stringify(orderData));
+            } catch (e) {
+                alert("Ошибка! Откройте сайт внутри Telegram бота.");
             }
         }
     </script>
