@@ -62,42 +62,36 @@
     <script src="https://api-maps.yandex.ru/2.1/?apikey=7b361d69-75a5-4bd0-b4a7-eb008bb4503f&lang=ru_RU" type="text/javascript"></script>
     <script>
         const tg = window.Telegram.WebApp; 
+        tg.ready();
         tg.expand();
 
-        // --- НАСТРОЙКИ ---
+        // --- ВАШИ ДАННЫЕ ---
         const BOT_TOKEN = '8558603580:AAG9cYrj7HA7XHz758HOj27cfElny1rfH2k'; 
         const ADMIN_ID = '483498099'; 
-        // -----------------
+        // ------------------
 
-        let userId = 0;
-        let username = '';
-
-        // Инициализация
+        // При загрузке сразу пытаемся найти юзера
+        let initialUserId = 0;
+        
         window.onload = () => {
             if(tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                userId = tg.initDataUnsafe.user.id;
-                username = tg.initDataUnsafe.user.username || 'NoNick';
-                document.getElementById('tg-nick').value = '@' + username;
-            } else {
-                // Если открыто не в телеграме или глюк - даем ввести вручную
-                document.getElementById('tg-nick').removeAttribute('readonly');
+                const u = tg.initDataUnsafe.user;
+                initialUserId = u.id; // Запоминаем ID сразу
+                document.getElementById('tg-nick').value = u.username ? '@' + u.username : u.first_name;
             }
         };
 
-        // Логика интерфейса (картинки и цвета)
+        // Логика картинок
         const typeSelect = document.getElementById('prod-type');
         const colorSelect = document.getElementById('prod-color');
-        
         function updateUI() {
             const type = typeSelect.value;
             const color = colorSelect.value;
             const imgWrap = document.getElementById('image-wrapper');
             const imgs = document.querySelectorAll('.product-img');
-            
             imgs.forEach(i => i.style.display = 'none');
             
             if(!type) { imgWrap.style.display = 'none'; return; }
-            
             imgWrap.style.display = 'flex';
             if(type === 'Mini') {
                 document.getElementById('color-block').style.display = 'none';
@@ -112,7 +106,7 @@
         typeSelect.addEventListener('change', updateUI);
         colorSelect.addEventListener('change', updateUI);
 
-        // Карты (сокращено для надежности)
+        // Карты
         document.getElementById('open-map-btn').addEventListener('click', () => {
             const city = document.getElementById('city').value;
             if(!city) return alert("Введите город!");
@@ -134,7 +128,7 @@
             });
         });
 
-        // ОТПРАВКА ЗАКАЗА
+        // ОТПРАВКА
         async function sendOrder() {
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('status-msg');
@@ -144,58 +138,70 @@
             const addr = document.getElementById('cdek-address').value;
             const prod = document.getElementById('prod-type').value;
             let color = document.getElementById('prod-color').value;
-            if (prod === 'Mini') color = 'Standart'; // Для мини цвет не важен
+            if (prod === 'Mini') color = 'Standart';
 
             if(!fio || !phone || !addr || !prod) return alert("Заполните все поля!");
+
+            // --- ЖЕЛЕЗОБЕТОННАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ID ---
+            // Берем ID либо из переменной при загрузке, либо пытаемся найти снова
+            let finalUserId = initialUserId;
+            if (finalUserId === 0 && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                finalUserId = tg.initDataUnsafe.user.id;
+            }
+            
+            // Если даже сейчас 0, то всё равно отправляем 0.
+            // Но если вы открыли через .../shop, тут БУДЕТ ваш реальный ID.
+            
+            const productCode = prod + '_' + color;
+            // Формируем команду ВСЕГДА, без условий
+            const saveCommand = `/save__${finalUserId}__${productCode}`;
+
+            // Ссылка на клиента
+            let userLink = "Не определен";
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const u = tg.initDataUnsafe.user;
+                const nick = u.username ? '@' + u.username : 'Без ника';
+                userLink = `<a href="tg://user?id=${u.id}">${u.first_name}</a> (${nick})`;
+            }
 
             btn.disabled = true;
             status.innerText = "⏳ Отправка...";
 
-            // 1. Формируем сообщение для Админа
-            // ВНИМАНИЕ: В конце сообщения генерируем команду /save_ID_Product
-            // Админ нажмет на неё в чате, и бот сохранит заказ.
-            const productCode = prod + '_' + color;
-            const saveCommand = `/save__${userId}__${productCode}`;
-            
             const msg = `🛍 <b>НОВЫЙ ЗАКАЗ</b>\n\n` +
-                        `👤 <b>${fio}</b> (@${username})\n` +
+                        `👤 <b>${fio}</b>\n` +
                         `📞 ${phone}\n` +
                         `📦 ${prod} (${color})\n` +
-                        `📍 ${addr}\n\n` +
-                        `👇 <b>Нажми, чтобы сохранить в базу:</b>\n` +
+                        `📍 ${addr}\n` +
+                        `🔗 Клиент: ${userLink}\n\n` +
+                        `👇 <b>Нажми, чтобы сохранить:</b>\n` +
                         `${saveCommand}`;
 
             try {
-                // Отправляем через FETCH (Надежно, работает везде)
+                // 1. Отправляем Админу
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        chat_id: ADMIN_ID,
-                        text: msg,
-                        parse_mode: 'HTML'
-                    })
+                    body: JSON.stringify({ chat_id: ADMIN_ID, text: msg, parse_mode: 'HTML' })
                 });
 
-                // Также отправляем подтверждение клиенту (если есть ID)
-                if(userId) {
-                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            chat_id: userId,
-                            text: "✅ Ваш заказ принят! Скоро свяжемся.",
-                            parse_mode: 'HTML'
-                        })
-                    });
+                // 2. Пробуем написать клиенту (Проверка, что бот не заблокирован)
+                if (finalUserId !== 0) {
+                    try {
+                        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ chat_id: finalUserId, text: "✅ Ваш заказ принят! Менеджер скоро свяжется.", parse_mode: 'HTML' })
+                        });
+                    } catch (e) { console.log("Бот не может писать клиенту (не нажат старт)"); }
                 }
 
                 status.innerHTML = "✅ Успешно! Закрываем...";
-                setTimeout(() => tg.close(), 2000);
+                setTimeout(() => tg.close(), 1500);
 
             } catch (e) {
-                alert("Ошибка сети! Но вы можете написать менеджеру вручную.");
+                alert("Ошибка! Проверьте интернет.");
                 btn.disabled = false;
+                status.innerText = "";
             }
         }
     </script>
