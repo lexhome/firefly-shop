@@ -9,17 +9,47 @@
         :root { --primary-color: #007bff; --telegram-color: #0088cc; --bg-light: #f4f7f9; --text-dark: #333; }
         body { font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-light); color: var(--text-dark); }
         .container { padding: 20px 5%; max-width: 500px; margin: 0 auto; }
-        .product-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .product-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+        
         .custom-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
+        .custom-input:read-only { background-color: #e9ecef; color: #6c757d; }
+        
         .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px;}
-        .btn-telegram { background-color: var(--telegram-color); color: white; }
+        .btn-telegram { background-color: var(--telegram-color); color: white; box-shadow: 0 4px 12px rgba(0,136,204,0.3); }
         .btn-outline { background: #fff; border: 2px dashed #cbd5e0; color: #718096; }
-        #yandex-map { width: 100%; height: 400px; display: none; margin-top: 10px; border-radius: 12px; }
-        .img-container { display: none; justify-content: center; margin-bottom: 20px; height: 200px; }
-        .product-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+        
+        #yandex-map { width: 100%; height: 400px; display: none; margin-top: 10px; border-radius: 12px; overflow: hidden; }
+        
+        .img-container { display: none; justify-content: center; margin-bottom: 20px; height: 200px; align-items: center; }
+        .product-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; border-radius: 12px; }
+
+        /* Метка версии в углу */
+        .version-tag {
+            position: fixed;
+            bottom: 5px;
+            right: 10px;
+            font-size: 12px;
+            color: #aaa;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 5px;
+            border-radius: 4px;
+            z-index: 9999;
+            pointer-events: none;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
+
+    <div id="version-display" class="version-tag">Checking...</div>
+    <script>
+        (function(){
+            const params = new URLSearchParams(window.location.search);
+            // Берет 'v' из ссылки. Если нет - пишет 'dev'
+            document.getElementById('version-display').innerText = 'v=' + (params.get('v') || 'dev');
+        })();
+    </script>
+
     <div class="container">
         <div class="product-card">
             <h2 style="text-align:center">Оформление заказа</h2>
@@ -31,6 +61,7 @@
                 <img id="img-std-gray"  src="firefly_std_gray.png"  class="product-img">
             </div>
 
+            <label>Устройство:</label>
             <select id="prod-type" class="custom-input">
                 <option value="" disabled selected>-- Выберите устройство --</option>
                 <option value="Mini">Светлячок Мини (4500 ₽)</option>
@@ -38,6 +69,7 @@
             </select>
 
             <div id="color-block" style="display:none;">
+                <label>Цвет:</label>
                 <select id="prod-color" class="custom-input">
                     <option value="Black">Черный</option>
                     <option value="White">Белый</option>
@@ -45,14 +77,20 @@
                 </select>
             </div>
 
+            <label>Ваши данные:</label>
             <input type="text" id="tg-nick" class="custom-input" placeholder="Никнейм" readonly>
             <input type="text" id="fio" class="custom-input" placeholder="ФИО Получателя">
             <input type="tel" id="phone" class="custom-input" placeholder="Телефон (+7...)">
-            <input type="text" id="city" class="custom-input" placeholder="Город">
+
+            <label>Доставка:</label>
+            <input type="text" id="city" class="custom-input" placeholder="Город (например: Казань)">
             
-            <button type="button" class="btn btn-outline" id="open-map-btn">📍 Найти пункты СДЭК</button>
+            <div style="margin-bottom: 10px; color: #666; font-size: 0.9em;">
+                Введите город выше и нажмите кнопку поиска:
+            </div>
+            <button type="button" class="btn btn-outline" id="open-map-btn">📍 Найти пункт СДЭК</button>
             <div id="yandex-map"></div>
-            <input type="text" id="cdek-address" class="custom-input" placeholder="Адрес ПВЗ" readonly style="margin-top:10px;">
+            <input type="text" id="cdek-address" class="custom-input" placeholder="Адрес выбранного пункта" readonly style="margin-top:10px;">
 
             <button id="submit-btn" class="btn btn-telegram" onclick="sendOrder()">Оформить заказ</button>
             <div id="status-msg" style="margin-top:15px; text-align:center;"></div>
@@ -60,38 +98,60 @@
     </div>
 
     <script src="https://api-maps.yandex.ru/2.1/?apikey=7b361d69-75a5-4bd0-b4a7-eb008bb4503f&lang=ru_RU" type="text/javascript"></script>
+
     <script>
         const tg = window.Telegram.WebApp; 
         tg.ready();
         tg.expand();
 
-        // --- ВАШИ ДАННЫЕ ---
+        // === НАСТРОЙКИ (Ваши данные) ===
         const BOT_TOKEN = '8558603580:AAG9cYrj7HA7XHz758HOj27cfElny1rfH2k'; 
         const ADMIN_ID = '483498099'; 
-        // ------------------
+        // ===============================
 
-        // При загрузке сразу пытаемся найти юзера
         let initialUserId = 0;
-        
+
+        // --- 1. Инициализация при загрузке ---
         window.onload = () => {
             if(tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const u = tg.initDataUnsafe.user;
-                initialUserId = u.id; // Запоминаем ID сразу
-                document.getElementById('tg-nick').value = u.username ? '@' + u.username : u.first_name;
+                initialUserId = u.id; // Сохраняем ID
+                const name = u.username ? '@' + u.username : u.first_name;
+                document.getElementById('tg-nick').value = name;
+            } else {
+                // Если открыли в браузере
+                document.getElementById('tg-nick').removeAttribute('readonly');
+                document.getElementById('tg-nick').placeholder = "Введите ник или имя";
             }
         };
 
-        // Логика картинок
+        // --- 2. Логика маски телефона ---
+        const phoneInput = document.getElementById('phone');
+        phoneInput.addEventListener('focus', function() { if (!this.value) this.value = '+7'; });
+        phoneInput.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, ''); 
+            if (value.length === 0) { this.value = ''; return; }
+            if (value[0] === '8') value = '7' + value.substring(1);
+            else if (value[0] === '9') value = '7' + value;
+            else if (value[0] !== '7') value = '7' + value;
+            if (value.length > 11) value = value.substring(0, 11);
+            this.value = '+' + value;
+        });
+
+        // --- 3. Логика переключения картинок ---
         const typeSelect = document.getElementById('prod-type');
         const colorSelect = document.getElementById('prod-color');
+        
         function updateUI() {
             const type = typeSelect.value;
             const color = colorSelect.value;
             const imgWrap = document.getElementById('image-wrapper');
             const imgs = document.querySelectorAll('.product-img');
+            
             imgs.forEach(i => i.style.display = 'none');
             
             if(!type) { imgWrap.style.display = 'none'; return; }
+            
             imgWrap.style.display = 'flex';
             if(type === 'Mini') {
                 document.getElementById('color-block').style.display = 'none';
@@ -106,33 +166,43 @@
         typeSelect.addEventListener('change', updateUI);
         colorSelect.addEventListener('change', updateUI);
 
-        // Карты
+        // --- 4. Карты ---
         document.getElementById('open-map-btn').addEventListener('click', () => {
             const city = document.getElementById('city').value;
-            if(!city) return alert("Введите город!");
-            document.getElementById('yandex-map').style.display = 'block';
+            if(!city) return alert("Пожалуйста, сначала введите город!");
+            
+            const mapDiv = document.getElementById('yandex-map');
+            mapDiv.style.display = 'block';
+            
             ymaps.ready(() => {
                 const map = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 9, controls: ['zoomControl'] });
-                const search = new ymaps.control.SearchControl({ options: { provider: 'yandex#search' } });
+                const search = new ymaps.control.SearchControl({ options: { provider: 'yandex#search', noPlacemark: false } });
                 map.controls.add(search);
+                
                 search.events.add('resultselect', (e) => {
                     const idx = e.get('index');
                     search.getResult(idx).then(res => {
                         const name = res.properties.get('name');
-                        const addr = res.properties.get('description');
-                        document.getElementById('cdek-address').value = addr + ', ' + name;
-                        document.getElementById('yandex-map').style.display = 'none';
+                        const addr = res.properties.get('description') || res.properties.get('text');
+                        document.getElementById('cdek-address').value = `${addr}, ${name}`;
+                        
+                        setTimeout(() => {
+                            mapDiv.style.display = 'none';
+                            document.getElementById('cdek-address').scrollIntoView({behavior: 'smooth'});
+                        }, 1000);
                     });
                 });
+                
                 search.search('СДЭК ' + city);
             });
         });
 
-        // ОТПРАВКА
+        // --- 5. ОТПРАВКА ЗАКАЗА ---
         async function sendOrder() {
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('status-msg');
             
+            // Сбор данных
             const fio = document.getElementById('fio').value;
             const phone = document.getElementById('phone').value;
             const addr = document.getElementById('cdek-address').value;
@@ -140,51 +210,49 @@
             let color = document.getElementById('prod-color').value;
             if (prod === 'Mini') color = 'Standart';
 
-            if(!fio || !phone || !addr || !prod) return alert("Заполните все поля!");
+            // Проверка
+            if(!fio || !phone || !addr || !prod) return alert("Пожалуйста, заполните все поля!");
 
-            // --- ЖЕЛЕЗОБЕТОННАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ID ---
-            // Берем ID либо из переменной при загрузке, либо пытаемся найти снова
+            // Определяем ID
             let finalUserId = initialUserId;
+            // Если при загрузке не поймали, пробуем сейчас (иногда помогает)
             if (finalUserId === 0 && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 finalUserId = tg.initDataUnsafe.user.id;
             }
-            
-            // Если даже сейчас 0, то всё равно отправляем 0.
-            // Но если вы открыли через .../shop, тут БУДЕТ ваш реальный ID.
-            
-            const productCode = prod + '_' + color;
-            // Формируем команду ВСЕГДА, без условий
-            const saveCommand = `/save__${finalUserId}__${productCode}`;
 
-            // Ссылка на клиента
-            let userLink = "Не определен";
+            // Формируем ссылку на клиента
+            let userLink = "Не определен (браузер)";
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const u = tg.initDataUnsafe.user;
                 const nick = u.username ? '@' + u.username : 'Без ника';
                 userLink = `<a href="tg://user?id=${u.id}">${u.first_name}</a> (${nick})`;
             }
 
+            // Генерируем команду для сохранения в базу
+            const productCode = prod + '_' + color;
+            const saveCommand = `/save__${finalUserId}__${productCode}`;
+
             btn.disabled = true;
-            status.innerText = "⏳ Отправка...";
+            status.innerText = "⏳ Отправка заказа...";
 
             const msg = `🛍 <b>НОВЫЙ ЗАКАЗ</b>\n\n` +
-                        `👤 <b>${fio}</b>\n` +
-                        `📞 ${phone}\n` +
-                        `📦 ${prod} (${color})\n` +
-                        `📍 ${addr}\n` +
-                        `🔗 Клиент: ${userLink}\n\n` +
-                        `👇 <b>Нажми, чтобы сохранить:</b>\n` +
+                        `📦 <b>Товар:</b> ${prod} (${color})\n` +
+                        `👤 <b>ФИО:</b> ${fio}\n` +
+                        `📱 <b>Тел:</b> ${phone}\n` +
+                        `📍 <b>ПВЗ:</b> ${addr}\n` +
+                        `🔗 <b>Клиент:</b> ${userLink}\n\n` +
+                        `👇 <b>Нажми, чтобы сохранить в базу:</b>\n` +
                         `${saveCommand}`;
 
             try {
-                // 1. Отправляем Админу
+                // 1. Отправка Админу
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ chat_id: ADMIN_ID, text: msg, parse_mode: 'HTML' })
                 });
 
-                // 2. Пробуем написать клиенту (Проверка, что бот не заблокирован)
+                // 2. Отправка Клиенту (если ID есть)
                 if (finalUserId !== 0) {
                     try {
                         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -192,14 +260,14 @@
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({ chat_id: finalUserId, text: "✅ Ваш заказ принят! Менеджер скоро свяжется.", parse_mode: 'HTML' })
                         });
-                    } catch (e) { console.log("Бот не может писать клиенту (не нажат старт)"); }
+                    } catch (e) { console.log("Клиент не запускал бота, сообщение не доставлено"); }
                 }
 
-                status.innerHTML = "✅ Успешно! Закрываем...";
-                setTimeout(() => tg.close(), 1500);
+                status.innerHTML = "✅ <b>Готово!</b>";
+                setTimeout(() => tg.close(), 2000);
 
             } catch (e) {
-                alert("Ошибка! Проверьте интернет.");
+                alert("Ошибка интернета. Попробуйте еще раз.");
                 btn.disabled = false;
                 status.innerText = "";
             }
