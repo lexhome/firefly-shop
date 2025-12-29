@@ -67,12 +67,11 @@
                 </select>
             </div>
 
-            <label>Ваши данные:</label>
-            <input type="text" id="tg-nick" class="custom-input" placeholder="Никнейм" readonly>
+            <label>Данные для доставки:</label>
             <input type="text" id="fio" class="custom-input" placeholder="ФИО Получателя">
             <input type="tel" id="phone" class="custom-input" placeholder="Телефон (+7...)">
 
-            <label>Доставка:</label>
+            <label>Город и ПВЗ:</label>
             <input type="text" id="city" class="custom-input" placeholder="Город (например: Казань)">
             
             <div style="margin-bottom: 10px; color: #666; font-size: 0.9em;">
@@ -94,19 +93,7 @@
         tg.ready();
         tg.expand();
 
-        // 1. Инициализация
-        window.onload = () => {
-            if(tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const u = tg.initDataUnsafe.user;
-                const name = u.username ? '@' + u.username : u.first_name;
-                document.getElementById('tg-nick').value = name;
-            } else {
-                document.getElementById('tg-nick').removeAttribute('readonly');
-                document.getElementById('tg-nick').placeholder = "Введите ник или имя";
-            }
-        };
-
-        // 2. Маска телефона
+        // 1. Маска телефона
         const phoneInput = document.getElementById('phone');
         phoneInput.addEventListener('focus', function() { if (!this.value) this.value = '+7'; });
         phoneInput.addEventListener('input', function(e) {
@@ -119,7 +106,7 @@
             this.value = '+' + value;
         });
 
-        // 3. Переключение картинок
+        // 2. Переключение картинок
         const typeSelect = document.getElementById('prod-type');
         const colorSelect = document.getElementById('prod-color');
         
@@ -147,7 +134,7 @@
         typeSelect.addEventListener('change', updateUI);
         colorSelect.addEventListener('change', updateUI);
 
-        // 4. Карты
+        // 3. Карты
         document.getElementById('open-map-btn').addEventListener('click', () => {
             const city = document.getElementById('city').value;
             if(!city) return alert("Пожалуйста, сначала введите город!");
@@ -177,7 +164,7 @@
             });
         });
 
-        // 5. ОТПРАВКА ДАННЫХ В ТЕЛЕГРАМ
+        // 4. ОТПРАВКА ДАННЫХ В ТЕЛЕГРАМ
         function sendOrder() {
             const fio = document.getElementById('fio').value;
             const phone = document.getElementById('phone').value;
