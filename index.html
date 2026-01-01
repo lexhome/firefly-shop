@@ -171,7 +171,9 @@
             const addr = document.getElementById('cdek-address').value;
             const prod = document.getElementById('prod-type').value;
             let color = document.getElementById('prod-color').value;
-            if (prod === 'Mini') color = 'Standart';
+            
+            // --- [v013 FIX] Если Мини, то цвет принудительно Black ---
+            if (prod === 'Mini') color = 'Black';
 
             if(!fio || !phone || !addr || !prod) return alert("Пожалуйста, заполните все поля!");
 
