@@ -8,7 +8,7 @@
     <style>
         :root { --primary-color: #007bff; --telegram-color: #0088cc; --bg-light: #f4f7f9; --text-dark: #333; }
         body { font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-light); color: var(--text-dark); }
-        .container { padding: 20px 5%; max-width: 500px; margin: 0 auto; }
+        .container { padding: 20px 5%; max-width: 500px; margin: 0 auto; padding-bottom: 50px; }
         .product-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
         
         .custom-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
@@ -22,6 +22,34 @@
         
         .img-container { display: none; justify-content: center; margin-bottom: 20px; height: 200px; align-items: center; }
         .product-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; border-radius: 12px; }
+
+        /* Блок итоговой цены */
+        .total-block {
+            background-color: #f0f9ff;
+            border: 1px solid #bae3ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+        }
+        .price-total {
+            border-top: 1px solid #ddd;
+            margin-top: 8px;
+            padding-top: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #000;
+            display: flex;
+            justify-content: space-between;
+        }
 
         .version-tag {
             position: fixed; bottom: 5px; right: 10px; font-size: 12px; color: #aaa;
@@ -54,8 +82,8 @@
             <label>Устройство:</label>
             <select id="prod-type" class="custom-input">
                 <option value="" disabled selected>-- Выберите устройство --</option>
-                <option value="Mini">Светлячок Мини (4500 ₽)</option>
-                <option value="Standart">Светлячок Стандарт (7500 ₽)</option>
+                <option value="Mini">Светлячок Мини</option>
+                <option value="Standart">Светлячок Стандарт</option>
             </select>
 
             <div id="color-block" style="display:none;">
@@ -80,6 +108,21 @@
             <button type="button" class="btn btn-outline" id="open-map-btn">📍 Найти пункт СДЭК</button>
             <div id="yandex-map"></div>
             <input type="text" id="cdek-address" class="custom-input" placeholder="Адрес выбранного пункта" readonly style="margin-top:10px;">
+
+            <div id="total-block" class="total-block">
+                <div class="price-row">
+                    <span>Устройство:</span>
+                    <span id="price-device">0 ₽</span>
+                </div>
+                <div class="price-row">
+                    <span>Доставка (РФ):</span>
+                    <span id="price-delivery">450 ₽</span>
+                </div>
+                <div class="price-total">
+                    <span>ИТОГО:</span>
+                    <span id="price-total">0 ₽</span>
+                </div>
+            </div>
 
             <button id="submit-btn" class="btn btn-telegram" onclick="sendOrder()">Оформить заказ</button>
             <div id="status-msg" style="margin-top:15px; text-align:center;"></div>
@@ -106,7 +149,7 @@
             this.value = '+' + value;
         });
 
-        // 2. Переключение картинок
+        // 2. Переключение картинок и РАСЧЕТ ЦЕНЫ
         const typeSelect = document.getElementById('prod-type');
         const colorSelect = document.getElementById('prod-color');
         
@@ -116,10 +159,16 @@
             const imgWrap = document.getElementById('image-wrapper');
             const imgs = document.querySelectorAll('.product-img');
             
+            // Сброс картинок
             imgs.forEach(i => i.style.display = 'none');
             
-            if(!type) { imgWrap.style.display = 'none'; return; }
+            if(!type) { 
+                imgWrap.style.display = 'none'; 
+                document.getElementById('total-block').style.display = 'none';
+                return; 
+            }
             
+            // Логика картинок
             imgWrap.style.display = 'flex';
             if(type === 'Mini') {
                 document.getElementById('color-block').style.display = 'none';
@@ -130,7 +179,27 @@
                 if(color === 'White') document.getElementById('img-std-white').style.display = 'block';
                 if(color === 'Gray') document.getElementById('img-std-gray').style.display = 'block';
             }
+
+            // Логика Цены
+            calculatePrice(type);
         }
+
+        function calculatePrice(type) {
+            let devicePrice = 0;
+            let deliveryPrice = 450;
+            
+            if (type === 'Mini') devicePrice = 4500;
+            if (type === 'Standart') devicePrice = 7500;
+
+            const total = devicePrice + deliveryPrice;
+
+            document.getElementById('price-device').innerText = devicePrice + ' ₽';
+            document.getElementById('price-delivery').innerText = deliveryPrice + ' ₽';
+            document.getElementById('price-total').innerText = total + ' ₽';
+            
+            document.getElementById('total-block').style.display = 'block';
+        }
+
         typeSelect.addEventListener('change', updateUI);
         colorSelect.addEventListener('change', updateUI);
 
@@ -168,25 +237,27 @@
         function sendOrder() {
             const fio = document.getElementById('fio').value;
             const phone = document.getElementById('phone').value;
+            const city = document.getElementById('city').value;
             const addr = document.getElementById('cdek-address').value;
             const prod = document.getElementById('prod-type').value;
             let color = document.getElementById('prod-color').value;
             
-            // --- [v013 FIX] Если Мини, то цвет принудительно Black ---
+            // Если Мини, цвет Black
             if (prod === 'Mini') color = 'Black';
 
-            if(!fio || !phone || !addr || !prod) return alert("Пожалуйста, заполните все поля!");
+            if(!fio || !phone || !city || !addr || !prod) return alert("Пожалуйста, заполните все поля!");
 
             // Упаковываем данные в объект
             const data = {
                 fio: fio,
                 phone: phone,
+                city: city,      // Добавлен город
                 address: addr,
                 product: prod,
                 color: color
             };
 
-            // Отправляем данные боту (Безопасно)
+            // Отправляем данные боту
             tg.sendData(JSON.stringify(data));
         }
     </script>
