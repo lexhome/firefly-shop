@@ -56,6 +56,27 @@
             background: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 4px;
             z-index: 9999; pointer-events: none; font-family: monospace;
         }
+
+        /* Стили для выбора доставки */
+        .delivery-options { display: flex; gap: 10px; margin-bottom: 15px; }
+        .delivery-option {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .delivery-option.active {
+            border-color: var(--telegram-color);
+            background-color: #f0f9ff;
+            color: var(--telegram-color);
+            font-weight: bold;
+        }
+        .delivery-option span { display: block; font-size: 12px; color: #888; margin-top: 3px; }
+        .delivery-option.active span { color: var(--telegram-color); }
+
     </style>
 </head>
 <body>
@@ -95,6 +116,18 @@
                 </select>
             </div>
 
+            <label>Способ доставки:</label>
+            <div class="delivery-options">
+                <div class="delivery-option active" onclick="setDelivery('cdek')" id="opt-cdek">
+                    СДЭК
+                    <span>450 ₽</span>
+                </div>
+                <div class="delivery-option" onclick="setDelivery('ozon')" id="opt-ozon">
+                    OZON
+                    <span>200 ₽</span>
+                </div>
+            </div>
+
             <label>Данные для доставки:</label>
             <input type="text" id="fio" class="custom-input" placeholder="ФИО Получателя">
             <input type="tel" id="phone" class="custom-input" placeholder="Телефон (+7...)">
@@ -115,7 +148,7 @@
                     <span id="price-device">0 ₽</span>
                 </div>
                 <div class="price-row">
-                    <span>Доставка (РФ):</span>
+                    <span>Доставка:</span>
                     <span id="price-delivery">450 ₽</span>
                 </div>
                 <div class="price-total">
@@ -135,6 +168,8 @@
         const tg = window.Telegram.WebApp; 
         tg.ready();
         tg.expand();
+
+        let currentDelivery = 'cdek';
 
         // 1. Маска телефона
         const phoneInput = document.getElementById('phone');
@@ -184,9 +219,27 @@
             calculatePrice(type);
         }
 
+        function setDelivery(method) {
+            currentDelivery = method;
+            document.getElementById('opt-cdek').classList.remove('active');
+            document.getElementById('opt-ozon').classList.remove('active');
+            document.getElementById('opt-' + method).classList.add('active');
+
+            // Меняем текст кнопки карты
+            const mapBtn = document.getElementById('open-map-btn');
+            if(method === 'cdek') mapBtn.innerText = "📍 Найти пункт СДЭК";
+            if(method === 'ozon') mapBtn.innerText = "📍 Найти пункт Ozon";
+            
+            // Очищаем адрес, так как пункты разные
+            document.getElementById('cdek-address').value = "";
+            document.getElementById('yandex-map').style.display = 'none';
+
+            updateUI(); // пересчитать цену
+        }
+
         function calculatePrice(type) {
             let devicePrice = 0;
-            let deliveryPrice = 450;
+            let deliveryPrice = (currentDelivery === 'ozon') ? 200 : 450;
             
             if (type === 'Mini') devicePrice = 4500;
             if (type === 'Standart') devicePrice = 7500;
@@ -229,7 +282,10 @@
                         }, 1000);
                     });
                 });
-                search.search('СДЭК ' + city);
+
+                // Поисковый запрос зависит от доставки
+                const prefix = (currentDelivery === 'ozon') ? 'Ozon ' : 'СДЭК ';
+                search.search(prefix + city);
             });
         });
 
@@ -251,10 +307,11 @@
             const data = {
                 fio: fio,
                 phone: phone,
-                city: city,      // Добавлен город
+                city: city, 
                 address: addr,
                 product: prod,
-                color: color
+                color: color,
+                delivery_method: currentDelivery // Добавлено поле
             };
 
             // Отправляем данные боту
