@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Склад - DEBUG</title>
+    <title>Склад</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --primary-color: #007bff; --bg-light: #f4f7f9; --text-dark: #333; }
         body { font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: var(--bg-light); color: var(--text-dark); }
-        h2 { text-align: center; margin-bottom: 20px; color: #d63384; } /* Розовый заголовок для проверки обновления */
+        h2 { text-align: center; margin-bottom: 20px; }
         .card { background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         td, th { padding: 12px 5px; text-align: left; border-bottom: 1px solid #eee; }
@@ -28,8 +28,7 @@
     </div>
 
     <div id="content" style="display:none;">
-        <h2>📦 Склад - DEBUG MODE</h2>
-        <p style="text-align:center; font-size:12px; color:red;">Окно не закроется само после сохранения (тест)</p>
+        <h2>📦 Управление складом</h2>
         <div class="card">
             <table>
                 <thead>
@@ -52,7 +51,6 @@
             
             if (pin !== CORRECT_PIN) {
                 document.getElementById('error-screen').style.display = 'block';
-                // Не выбрасываем ошибку, просто скрываем контент, чтобы видеть алерт если что
             } else {
                 document.getElementById('content').style.display = 'block';
             }
@@ -101,20 +99,17 @@
                         stock: updates
                     };
                     
-                    // ОТЛАДКА: Показываем, что отправляем
-                    alert("Отправка данных боту:\n" + JSON.stringify(updates, null, 2));
-
                     tg.sendData(JSON.stringify(data));
                     
-                    // ВРЕМЕННО: Не закрываем окно, чтобы успеть прочитать alert
+                    // Если хотите, чтобы окно закрывалось сразу, раскомментируйте:
                     // tg.close(); 
                 } catch (err) {
-                    alert("ОШИБКА внутри saveStock: " + err.message);
+                    alert("ОШИБКА: " + err.message);
                 }
             }
 
         } catch (globalErr) {
-            alert("КРИТИЧЕСКАЯ ОШИБКА JS: " + globalErr.message);
+            alert("КРИТИЧЕСКАЯ ОШИБКА: " + globalErr.message);
         }
     </script>
 </body>
