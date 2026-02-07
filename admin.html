@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Склад - Админка</title>
+    <title>Склад - DEBUG</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --primary-color: #007bff; --bg-light: #f4f7f9; --text-dark: #333; }
         body { font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: var(--bg-light); color: var(--text-dark); }
-        h2 { text-align: center; margin-bottom: 20px; }
+        h2 { text-align: center; margin-bottom: 20px; color: #d63384; } /* Розовый заголовок для проверки обновления */
         .card { background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         td, th { padding: 12px 5px; text-align: left; border-bottom: 1px solid #eee; }
         th { font-size: 14px; color: #888; }
         .stock-input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; text-align: center; background: #fdfdfd; }
-        .stock-input:focus { border-color: var(--primary-color); outline: none; }
         .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px; background-color: #28a745; color: white; }
         .row-label { font-weight: 500; font-size: 15px; }
         .row-sub { font-size: 13px; color: #666; }
@@ -29,7 +28,8 @@
     </div>
 
     <div id="content" style="display:none;">
-        <h2>📦 Управление складом</h2>
+        <h2>📦 Склад - DEBUG MODE</h2>
+        <p style="text-align:center; font-size:12px; color:red;">Окно не закроется само после сохранения (тест)</p>
         <div class="card">
             <table>
                 <thead>
@@ -45,63 +45,76 @@
     </div>
 
     <script>
-        // === ЗАЩИТА ===
-        // Если вы поменяли PIN в боте, поменяйте его и здесь!
-        const CORRECT_PIN = "6989"; 
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const pin = urlParams.get('pin');
-        
-        if (pin !== CORRECT_PIN) {
-            document.getElementById('error-screen').style.display = 'block';
-            throw new Error("Access denied");
-        } else {
-            document.getElementById('content').style.display = 'block';
-        }
-        // ==============
+        try {
+            const CORRECT_PIN = "6989"; 
+            const urlParams = new URLSearchParams(window.location.search);
+            const pin = urlParams.get('pin');
+            
+            if (pin !== CORRECT_PIN) {
+                document.getElementById('error-screen').style.display = 'block';
+                // Не выбрасываем ошибку, просто скрываем контент, чтобы видеть алерт если что
+            } else {
+                document.getElementById('content').style.display = 'block';
+            }
 
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
 
-        const products = [
-            { id: 'mini_black', name: 'Светлячок Mini', color: 'Black' },
-            { id: 'std_black',  name: 'Светлячок Std',  color: 'Black' },
-            { id: 'std_white',  name: 'Светлячок Std',  color: 'White' },
-            { id: 'std_gray',   name: 'Светлячок Std',  color: 'Gray' },
-            { id: 'std_blue',   name: 'Светлячок Std',  color: 'Blue' }
-        ];
+            const products = [
+                { id: 'mini_black', name: 'Светлячок Mini', color: 'Black' },
+                { id: 'std_black',  name: 'Светлячок Std',  color: 'Black' },
+                { id: 'std_white',  name: 'Светлячок Std',  color: 'White' },
+                { id: 'std_gray',   name: 'Светлячок Std',  color: 'Gray' },
+                { id: 'std_blue',   name: 'Светлячок Std',  color: 'Blue' }
+            ];
 
-        const tableBody = document.getElementById('stock-table');
+            const tableBody = document.getElementById('stock-table');
 
-        products.forEach(p => {
-            const currentVal = urlParams.get(p.id) || 0;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div class="row-label">${p.name}</div>
-                    <div class="row-sub">${p.color}</div>
-                </td>
-                <td style="text-align:center">
-                    <input type="number" id="inp_${p.id}" class="stock-input" value="${currentVal}">
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
-
-        function saveStock() {
-            const updates = {};
             products.forEach(p => {
-                const val = document.getElementById('inp_' + p.id).value;
-                updates[p.id] = parseInt(val) || 0;
+                const currentVal = urlParams.get(p.id) || 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="row-label">${p.name}</div>
+                        <div class="row-sub">${p.color}</div>
+                    </td>
+                    <td style="text-align:center">
+                        <input type="number" id="inp_${p.id}" class="stock-input" value="${currentVal}">
+                    </td>
+                `;
+                tableBody.appendChild(tr);
             });
 
-            const data = {
-                type: 'admin_stock_update',
-                stock: updates
-            };
-            tg.sendData(JSON.stringify(data));
-            tg.close();
+            window.saveStock = function() {
+                try {
+                    const updates = {};
+                    products.forEach(p => {
+                        const el = document.getElementById('inp_' + p.id);
+                        if(el) {
+                            updates[p.id] = parseInt(el.value) || 0;
+                        }
+                    });
+
+                    const data = {
+                        type: 'admin_stock_update',
+                        stock: updates
+                    };
+                    
+                    // ОТЛАДКА: Показываем, что отправляем
+                    alert("Отправка данных боту:\n" + JSON.stringify(updates, null, 2));
+
+                    tg.sendData(JSON.stringify(data));
+                    
+                    // ВРЕМЕННО: Не закрываем окно, чтобы успеть прочитать alert
+                    // tg.close(); 
+                } catch (err) {
+                    alert("ОШИБКА внутри saveStock: " + err.message);
+                }
+            }
+
+        } catch (globalErr) {
+            alert("КРИТИЧЕСКАЯ ОШИБКА JS: " + globalErr.message);
         }
     </script>
 </body>
