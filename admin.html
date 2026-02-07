@@ -18,15 +18,21 @@
         .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px; background-color: #28a745; color: white; }
         .row-label { font-weight: 500; font-size: 15px; }
         .row-sub { font-size: 13px; color: #666; }
-        #error-screen { display: none; color: red; text-align: center; margin-top: 50px; }
-        #content { display: none; } /* Скрываем контент по умолчанию */
+        
+        /* Экран ошибки */
+        #error-screen { display: none; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 10px; text-align: center; margin-top: 50px; }
+        #user-id-display { font-weight: bold; font-size: 1.2em; margin: 10px 0; color: #333; }
+        
+        #content { display: none; }
     </style>
 </head>
 <body>
 
     <div id="error-screen">
         <h2>⛔ Доступ запрещен</h2>
-        <p>Вы не являетесь администратором.</p>
+        <p>Ваш Telegram ID не совпадает с ID администратора.</p>
+        <div id="user-id-display">Ваш ID: ???</div>
+        <p style="font-size: 0.9em; color: #555;">Скопируйте этот номер и вставьте в admin.html в строку const ALLOWED_ID</p>
     </div>
 
     <div id="content">
@@ -50,24 +56,26 @@
         tg.ready();
         tg.expand();
 
-        // === НАСТРОЙКИ ===
-        // Вставьте сюда ваш реальный ID (тот же, что и ADMIN_ID в боте)
-        const ALLOWED_ID = 483498099; 
-        // ================
+        // === ВАЖНО: ВСТАВЬТЕ СЮДА ВАШ ID ПОСЛЕ ПРОВЕРКИ ===
+        const ALLOWED_ID = 483498099; // <--- Поменяйте это число на то, что покажет экран ошибки
+        // =================================================
 
-        // === ЗАЩИТА (ПРОВЕРКА ID) ===
+        // Получаем данные пользователя
         const user = tg.initDataUnsafe.user;
         
-        // Если открыто не из Телеграма ИЛИ ID не совпадает
+        // Логика проверки
         if (!user || user.id !== ALLOWED_ID) {
+            document.getElementById('content').style.display = 'none';
             document.getElementById('error-screen').style.display = 'block';
-            // Останавливаем скрипт, не показываем контент
-            throw new Error("Access denied: User ID mismatch"); 
+            
+            // Показываем реальный ID пользователя для отладки
+            const realId = user ? user.id : "Не определен (открыто не в Telegram?)";
+            document.getElementById('user-id-display').innerText = "Ваш ID: " + realId;
+            
+            throw new Error("Access denied");
         } else {
-            // Если ID совпал, показываем панель
             document.getElementById('content').style.display = 'block';
         }
-        // ============================
 
         const products = [
             { id: 'mini_black', name: 'Светлячок Mini', color: 'Black' },
