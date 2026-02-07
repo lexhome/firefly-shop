@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Склад - Админка</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --primary-color: #007bff; --bg-light: #f4f7f9; --text-dark: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: var(--bg-light); color: var(--text-dark); }
+        h2 { text-align: center; margin-bottom: 20px; }
+        .card { background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px 5px; text-align: left; border-bottom: 1px solid #eee; }
+        th { font-size: 14px; color: #888; }
+        .stock-input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; text-align: center; background: #fdfdfd; }
+        .stock-input:focus { border-color: var(--primary-color); outline: none; }
+        .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px; background-color: #28a745; color: white; }
+        .row-label { font-weight: 500; font-size: 15px; }
+        .row-sub { font-size: 13px; color: #666; }
+        #error-screen { display: none; color: red; text-align: center; margin-top: 50px; }
+        #content { display: none; } /* Скрываем контент по умолчанию */
+    </style>
+</head>
+<body>
+
+    <div id="error-screen">
+        <h2>⛔ Доступ запрещен</h2>
+        <p>Вы не являетесь администратором.</p>
+    </div>
+
+    <div id="content">
+        <h2>📦 Управление складом</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th style="text-align:center">Остаток</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-table"></tbody>
+            </table>
+        </div>
+        <button class="btn" onclick="saveStock()">💾 Сохранить изменения</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // === НАСТРОЙКИ ===
+        // Вставьте сюда ваш реальный ID (тот же, что и ADMIN_ID в боте)
+        const ALLOWED_ID = 483498099; 
+        // ================
+
+        // === ЗАЩИТА (ПРОВЕРКА ID) ===
+        const user = tg.initDataUnsafe.user;
+        
+        // Если открыто не из Телеграма ИЛИ ID не совпадает
+        if (!user || user.id !== ALLOWED_ID) {
+            document.getElementById('error-screen').style.display = 'block';
+            // Останавливаем скрипт, не показываем контент
+            throw new Error("Access denied: User ID mismatch"); 
+        } else {
+            // Если ID совпал, показываем панель
+            document.getElementById('content').style.display = 'block';
+        }
+        // ============================
+
+        const products = [
+            { id: 'mini_black', name: 'Светлячок Mini', color: 'Black' },
+            { id: 'std_black',  name: 'Светлячок Std',  color: 'Black' },
+            { id: 'std_white',  name: 'Светлячок Std',  color: 'White' },
+            { id: 'std_gray',   name: 'Светлячок Std',  color: 'Gray' },
+            { id: 'std_blue',   name: 'Светлячок Std',  color: 'Blue' }
+        ];
+
+        const params = new URLSearchParams(window.location.search);
+        const tableBody = document.getElementById('stock-table');
+
+        products.forEach(p => {
+            const currentVal = params.get(p.id) || 0;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="row-label">${p.name}</div>
+                    <div class="row-sub">${p.color}</div>
+                </td>
+                <td style="text-align:center">
+                    <input type="number" id="inp_${p.id}" class="stock-input" value="${currentVal}">
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        function saveStock() {
+            const updates = {};
+            products.forEach(p => {
+                const val = document.getElementById('inp_' + p.id).value;
+                updates[p.id] = parseInt(val) || 0;
+            });
+
+            const data = {
+                type: 'admin_stock_update',
+                stock: updates
+            };
+            tg.sendData(JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>
