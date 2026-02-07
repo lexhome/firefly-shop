@@ -9,7 +9,6 @@
         :root { --primary-color: #007bff; --telegram-color: #0088cc; --bg-light: #f4f7f9; --text-dark: #333; }
         body { font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-light); color: var(--text-dark); }
         .container { padding: 20px 5%; max-width: 500px; margin: 0 auto; padding-bottom: 80px; }
-        
         .product-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; margin-bottom: 20px; }
         
         .custom-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
@@ -120,7 +119,6 @@
 
         <div class="product-card" id="cart-card" style="display:none;">
             <h3 style="margin-top:0">🛒 Корзина</h3>
-            
             <div id="cart-list"></div>
             
             <hr style="border: 0; border-top: 1px dashed #ccc; margin: 20px 0;">
@@ -177,6 +175,7 @@
         let currentDelivery = 'cdek';
         let cart = [];
 
+        // 1. МАСКА ТЕЛЕФОНА (из v016)
         const phoneInput = document.getElementById('phone');
         phoneInput.addEventListener('focus', function() { if (!this.value) this.value = '+7'; });
         phoneInput.addEventListener('input', function(e) {
@@ -188,6 +187,7 @@
             this.value = '+' + value;
         });
 
+        // 2. КАРТИНКИ (из v016 + Синий)
         const typeSelect = document.getElementById('prod-type');
         const colorSelect = document.getElementById('prod-color');
         
@@ -210,7 +210,6 @@
                 if(color === 'Black') document.getElementById('img-std-black').style.display = 'block';
                 if(color === 'White') document.getElementById('img-std-white').style.display = 'block';
                 if(color === 'Gray') document.getElementById('img-std-gray').style.display = 'block';
-                // ДОБАВЛЕНО ОТОБРАЖЕНИЕ СИНЕГО
                 if(color === 'Blue') document.getElementById('img-std-blue').style.display = 'block';
             }
         }
@@ -218,6 +217,7 @@
         typeSelect.addEventListener('change', updateUI);
         colorSelect.addEventListener('change', updateUI);
 
+        // 3. КОРЗИНА
         function addToCart() {
             const type = typeSelect.value;
             if (!type) { tg.showPopup({message: "Выберите устройство!"}); return; }
@@ -240,10 +240,7 @@
             cart.push(item);
             renderCart();
             tg.HapticFeedback.notificationOccurred('success');
-            
-            setTimeout(() => {
-                document.getElementById('cart-card').scrollIntoView({behavior: 'smooth'});
-            }, 300);
+            setTimeout(() => { document.getElementById('cart-card').scrollIntoView({behavior: 'smooth'}); }, 300);
         }
 
         function removeFromCart(id) {
@@ -285,6 +282,7 @@
             calculateTotal(goodsTotal);
         }
 
+        // 4. ДОСТАВКА и КАРТА (из v016)
         function setDelivery(method) {
             currentDelivery = method;
             document.getElementById('opt-cdek').classList.remove('active');
@@ -342,6 +340,7 @@
             });
         });
 
+        // 5. ОТПРАВКА
         function sendOrder() {
             if (cart.length === 0) return alert("Корзина пуста!");
 
