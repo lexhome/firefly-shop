@@ -18,24 +18,17 @@
         .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px; background-color: #28a745; color: white; }
         .row-label { font-weight: 500; font-size: 15px; }
         .row-sub { font-size: 13px; color: #666; }
-        
-        /* Экран ошибки */
-        #error-screen { display: none; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 10px; text-align: center; margin-top: 50px; }
-        #user-id-display { font-weight: bold; font-size: 1.2em; margin: 10px 0; color: #333; }
-        
-        #content { display: none; }
+        #error-screen { display: none; color: red; text-align: center; margin-top: 50px; font-weight: bold;}
     </style>
 </head>
 <body>
 
     <div id="error-screen">
         <h2>⛔ Доступ запрещен</h2>
-        <p>Ваш Telegram ID не совпадает с ID администратора.</p>
-        <div id="user-id-display">Ваш ID: ???</div>
-        <p style="font-size: 0.9em; color: #555;">Скопируйте этот номер и вставьте в admin.html в строку const ALLOWED_ID</p>
+        <p>Неверный PIN-код или ссылка устарела.</p>
     </div>
 
-    <div id="content">
+    <div id="content" style="display:none;">
         <h2>📦 Управление складом</h2>
         <div class="card">
             <table>
@@ -52,30 +45,24 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        // === ВАЖНО: ВСТАВЬТЕ СЮДА ВАШ ID ПОСЛЕ ПРОВЕРКИ ===
-        const ALLOWED_ID = 483498099; // <--- Поменяйте это число на то, что покажет экран ошибки
-        // =================================================
-
-        // Получаем данные пользователя
-        const user = tg.initDataUnsafe.user;
+        // === ЗАЩИТА ===
+        // Если вы поменяли PIN в боте, поменяйте его и здесь!
+        const CORRECT_PIN = "6989"; 
         
-        // Логика проверки
-        if (!user || user.id !== ALLOWED_ID) {
-            document.getElementById('content').style.display = 'none';
+        const urlParams = new URLSearchParams(window.location.search);
+        const pin = urlParams.get('pin');
+        
+        if (pin !== CORRECT_PIN) {
             document.getElementById('error-screen').style.display = 'block';
-            
-            // Показываем реальный ID пользователя для отладки
-            const realId = user ? user.id : "Не определен (открыто не в Telegram?)";
-            document.getElementById('user-id-display').innerText = "Ваш ID: " + realId;
-            
             throw new Error("Access denied");
         } else {
             document.getElementById('content').style.display = 'block';
         }
+        // ==============
+
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
         const products = [
             { id: 'mini_black', name: 'Светлячок Mini', color: 'Black' },
@@ -85,11 +72,10 @@
             { id: 'std_blue',   name: 'Светлячок Std',  color: 'Blue' }
         ];
 
-        const params = new URLSearchParams(window.location.search);
         const tableBody = document.getElementById('stock-table');
 
         products.forEach(p => {
-            const currentVal = params.get(p.id) || 0;
+            const currentVal = urlParams.get(p.id) || 0;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
