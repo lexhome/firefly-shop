@@ -308,6 +308,8 @@
             document.getElementById('price-delivery').innerText = deliveryPrice + ' ₽';
             document.getElementById('price-total').innerText = total + ' ₽';
         }
+        
+        let myMap = null; // Глобальная переменная для карты
 
         document.getElementById('open-map-btn').addEventListener('click', () => {
             const city = document.getElementById('city').value;
@@ -317,19 +319,41 @@
             mapDiv.style.display = 'block';
             
             ymaps.ready(() => {
+                // 1. ВАЖНО: Удаляем старую карту перед созданием новой
+                if (myMap) {
+                    myMap.destroy();
+                    myMap = null;
+                }
                 document.getElementById('yandex-map').innerHTML = '';
-                const map = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 10, controls: ['zoomControl'] });
-                const search = new ymaps.control.SearchControl({ options: { provider: 'yandex#search', noPlacemark: false } });
-                map.controls.add(search);
+
+                // 2. Создаем новую карту
+                myMap = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 10, controls: ['zoomControl'] });
+                const search = new ymaps.control.SearchControl({ 
+                    options: { 
+                        provider: 'yandex#search', 
+                        noPlacemark: false,
+                        resultsPerPage: 5 // Ограничим выдачу для удобства
+                    } 
+                });
+                myMap.controls.add(search);
                 
                 search.events.add('resultselect', (e) => {
                     const idx = e.get('index');
                     search.getResult(idx).then(res => {
                         const name = res.properties.get('name');
                         const addr = res.properties.get('description') || res.properties.get('text');
+                        
+                        // Записываем адрес
                         document.getElementById('cdek-address').value = `${addr}, ${name}`;
+                        
+                        // Плавно скрываем карту
                         setTimeout(() => {
                             mapDiv.style.display = 'none';
+                            // Удаляем карту после выбора, чтобы освободить память
+                            if (myMap) {
+                                myMap.destroy();
+                                myMap = null;
+                            }
                             document.getElementById('cdek-address').scrollIntoView({behavior: 'smooth'});
                         }, 1000);
                     });
