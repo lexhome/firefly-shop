@@ -309,8 +309,6 @@
             document.getElementById('price-total').innerText = total + ' ₽';
         }
         
-        let myMap = null; // Глобальная переменная для карты
-
         document.getElementById('open-map-btn').addEventListener('click', () => {
             const city = document.getElementById('city').value;
             if(!city) { tg.showPopup({message: "Сначала введите город!"}); return; }
@@ -319,15 +317,14 @@
             mapDiv.style.display = 'block';
             
             ymaps.ready(() => {
-                // 1. УДАЛЕНИЕ СТАРОЙ КАРТЫ
-                // Используем window.myMap, чтобы найти карту даже при повторном клике
+                // 1. ОЧИСТКА: Удаляем старую карту (используем window, чтобы не было наложений)
                 if (window.myMap) {
                     window.myMap.destroy();
                     window.myMap = null;
                 }
                 document.getElementById('yandex-map').innerHTML = '';
 
-                // 2. СОЗДАНИЕ НОВОЙ КАРТЫ
+                // 2. СОЗДАНИЕ: Новая карта
                 window.myMap = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 10, controls: ['zoomControl'] });
                 
                 const search = new ymaps.control.SearchControl({ 
@@ -349,7 +346,7 @@
                         
                         setTimeout(() => {
                             mapDiv.style.display = 'none';
-                            // Чистим память после выбора
+                            // Удаляем карту после выбора, чтобы освободить память
                             if (window.myMap) {
                                 window.myMap.destroy();
                                 window.myMap = null;
@@ -359,9 +356,12 @@
                     });
                 });
 
-                // 3. ПОИСК (с учетом России, чтобы не искал улицы в Москве)
+                // 3. ПОИСК (Исправлено)
                 const method = (currentDelivery === 'ozon') ? 'Ozon' : 'СДЭК';
-                search.search('Россия, ' + city + ', ' + method);
+                
+                // Ставим ГОРОД первым. Яндекс сначала найдет город, а потом пункт внутри него.
+                // Формат: "Новокузнецк СДЭК" или "Novokuznetsk Ozon"
+                search.search(city + ' ' + method);
             });
         });
 
