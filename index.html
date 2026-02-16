@@ -282,7 +282,7 @@
             calculateTotal(goodsTotal);
         }
 
-        // 4. ДОСТАВКА и КАРТА (из v016)
+        // 4. ДОСТАВКА и КАРТА 
         function setDelivery(method) {
             currentDelivery = method;
             document.getElementById('opt-cdek').classList.remove('active');
@@ -319,23 +319,25 @@
             mapDiv.style.display = 'block';
             
             ymaps.ready(() => {
-                // 1. ВАЖНО: Удаляем старую карту перед созданием новой
-                if (myMap) {
-                    myMap.destroy();
-                    myMap = null;
+                // 1. УДАЛЕНИЕ СТАРОЙ КАРТЫ
+                // Используем window.myMap, чтобы найти карту даже при повторном клике
+                if (window.myMap) {
+                    window.myMap.destroy();
+                    window.myMap = null;
                 }
                 document.getElementById('yandex-map').innerHTML = '';
 
-                // 2. Создаем новую карту
-                myMap = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 10, controls: ['zoomControl'] });
+                // 2. СОЗДАНИЕ НОВОЙ КАРТЫ
+                window.myMap = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 10, controls: ['zoomControl'] });
+                
                 const search = new ymaps.control.SearchControl({ 
                     options: { 
                         provider: 'yandex#search', 
                         noPlacemark: false,
-                        resultsPerPage: 5 // Ограничим выдачу для удобства
+                        resultsPerPage: 5 
                     } 
                 });
-                myMap.controls.add(search);
+                window.myMap.controls.add(search);
                 
                 search.events.add('resultselect', (e) => {
                     const idx = e.get('index');
@@ -343,24 +345,23 @@
                         const name = res.properties.get('name');
                         const addr = res.properties.get('description') || res.properties.get('text');
                         
-                        // Записываем адрес
                         document.getElementById('cdek-address').value = `${addr}, ${name}`;
                         
-                        // Плавно скрываем карту
                         setTimeout(() => {
                             mapDiv.style.display = 'none';
-                            // Удаляем карту после выбора, чтобы освободить память
-                            if (myMap) {
-                                myMap.destroy();
-                                myMap = null;
+                            // Чистим память после выбора
+                            if (window.myMap) {
+                                window.myMap.destroy();
+                                window.myMap = null;
                             }
                             document.getElementById('cdek-address').scrollIntoView({behavior: 'smooth'});
                         }, 1000);
                     });
                 });
 
-                const prefix = (currentDelivery === 'ozon') ? 'Ozon ' : 'СДЭК ';
-                search.search(prefix + city);
+                // 3. ПОИСК (с учетом России, чтобы не искал улицы в Москве)
+                const method = (currentDelivery === 'ozon') ? 'Ozon' : 'СДЭК';
+                search.search('Россия, ' + city + ', ' + method);
             });
         });
 
