@@ -317,14 +317,14 @@
             mapDiv.style.display = 'block';
             
             ymaps.ready(() => {
-                // 1. ОЧИСТКА: Удаляем старую карту (используем window, чтобы не было наложений)
+                // 1. ОЧИСТКА
                 if (window.myMap) {
                     window.myMap.destroy();
                     window.myMap = null;
                 }
                 document.getElementById('yandex-map').innerHTML = '';
 
-                // 2. СОЗДАНИЕ: Новая карта
+                // 2. СОЗДАНИЕ КАРТЫ
                 window.myMap = new ymaps.Map('yandex-map', { center: [55.75, 37.61], zoom: 10, controls: ['zoomControl'] });
                 
                 const search = new ymaps.control.SearchControl({ 
@@ -332,6 +332,8 @@
                         provider: 'yandex#search', 
                         noPlacemark: false,
                         resultsPerPage: 5,
+                        // ВАЖНО: Отключаем поиск "рядом с центром карты".
+                        // Теперь он будет искать по всей России равноправно.
                         useMapBounds: false 
                     } 
                 });
@@ -347,7 +349,6 @@
                         
                         setTimeout(() => {
                             mapDiv.style.display = 'none';
-                            // Удаляем карту после выбора, чтобы освободить память
                             if (window.myMap) {
                                 window.myMap.destroy();
                                 window.myMap = null;
@@ -357,14 +358,16 @@
                     });
                 });
 
-                // 3. ПОИСК (Исправлено)
+                // 3. ПОИСК (ИСПРАВЛЕНО)
                 const method = (currentDelivery === 'ozon') ? 'Ozon' : 'СДЭК';
                 
-                // Ставим ГОРОД первым. Яндекс сначала найдет город, а потом пункт внутри него.
-                // Формат: "Новокузнецк СДЭК" или "Novokuznetsk Ozon"
-                search.search(city + ' ' + method);
+                // Формат: "Ozon, Новокузнецк"
+                // 1. Запятая разделяет запрос.
+                // 2. "Что ищем" стоит первым, чтобы Яндекс сразу понял цель.
+                search.search(method + ', ' + city);
             });
         });
+
 
         // 5. ОТПРАВКА
         function sendOrder() {
