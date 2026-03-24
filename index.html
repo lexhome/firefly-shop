@@ -176,6 +176,17 @@
         tg.ready();
         tg.expand();
 
+        // --- НОВАЯ ЛОГИКА ДЛЯ ДИНАМИЧЕСКИХ ЦЕН ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const cdekPrice = parseInt(urlParams.get('cdek')) || 450;
+        const ozonPrice = parseInt(urlParams.get('ozon')) || 350;
+
+        // Обновляем текст на кнопках доставки сразу при загрузке
+        document.querySelector('#opt-cdek span').innerText = cdekPrice + ' ₽';
+        document.querySelector('#opt-ozon span').innerText = ozonPrice + ' ₽';
+        document.getElementById('price-delivery').innerText = cdekPrice + ' ₽'; // СДЭК выбран по умолчанию
+        // ------------------------------------------
+
         let currentDelivery = 'cdek';
         let cart = [];
 
@@ -305,7 +316,7 @@
         }
 
         function calculateTotal(goodsSum) {
-            let deliveryPrice = (currentDelivery === 'ozon') ? 200 : 450;
+            let deliveryPrice = (currentDelivery === 'ozon') ? ozonPrice : cdekPrice;
             const total = goodsSum + deliveryPrice;
 
             document.getElementById('price-device').innerText = goodsSum + ' ₽';

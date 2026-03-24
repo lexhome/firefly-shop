@@ -40,6 +40,25 @@
                 <tbody id="stock-table"></tbody>
             </table>
         </div>
+
+        <h3 style="text-align: center; margin-top: 20px;">🚚 Доставка (руб)</h3>
+        <div class="card">
+            <table>
+                <tr>
+                    <td><div class="row-label">СДЭК</div></td>
+                    <td style="text-align:center">
+                        <input type="number" id="inp_cdek" class="stock-input" value="450">
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="row-label">OZON</div></td>
+                    <td style="text-align:center">
+                        <input type="number" id="inp_ozon" class="stock-input" value="350">
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <button class="btn" onclick="saveStock()">💾 Сохранить изменения</button>
     </div>
 
@@ -58,6 +77,10 @@
             const tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
+
+            // Читаем текущие цены доставки из URL (или ставим дефолт)
+            document.getElementById('inp_cdek').value = urlParams.get('cdek') || 450;
+            document.getElementById('inp_ozon').value = urlParams.get('ozon') || 350;
 
             const products = [
                 { id: 'mini_black', name: 'Светлячок Mini', color: 'Black' },
@@ -89,20 +112,20 @@
                     const updates = {};
                     products.forEach(p => {
                         const el = document.getElementById('inp_' + p.id);
-                        if(el) {
-                            updates[p.id] = parseInt(el.value) || 0;
-                        }
+                        if(el) updates[p.id] = parseInt(el.value) || 0;
                     });
 
                     const data = {
                         type: 'admin_stock_update',
-                        stock: updates
+                        stock: updates,
+                        // НОВАЯ ЧАСТЬ: Отправляем цены в бот
+                        settings: {
+                            cdek: parseInt(document.getElementById('inp_cdek').value) || 450,
+                            ozon: parseInt(document.getElementById('inp_ozon').value) || 350
+                        }
                     };
                     
                     tg.sendData(JSON.stringify(data));
-                    
-                    // Если хотите, чтобы окно закрывалось сразу, раскомментируйте:
-                    // tg.close(); 
                 } catch (err) {
                     alert("ОШИБКА: " + err.message);
                 }
